@@ -64,7 +64,8 @@ export const Categorias = () => {
             
             {/* Título da Seção */}
             <div className="mb-8 text-center sm:text-left">
-                <h2 className="text-2xl font-medium text-green-900">
+                {/* Cor fixa: Verde Escuro (#14532d) */}
+                <h2 className="text-2xl font-medium text-[#14532d]">
                     Navegue por Categorias
                 </h2>
             </div>
@@ -76,10 +77,11 @@ export const Categorias = () => {
                     <a 
                         key={cat.id} 
                         href="#" 
-                        className="group flex flex-col items-center justify-center p-6 rounded-xl bg-[#f5f5f5] hover:bg-green-400 transition-all duration-300 cursor-pointer"
+                        // Cor fixa no Hover: Verde Claro (#4ade80)
+                        className="group flex flex-col items-center justify-center p-6 rounded-xl bg-[#f5f5f5] hover:bg-[#4ade80] transition-all duration-300 cursor-pointer"
                     >
-                        {/* Ícone */}
-                        <div className="text-green-900 group-hover:text-white transition-colors duration-300 mb-3">
+                        {/* Ícone - Cor fixa: Verde Escuro (#14532d) */}
+                        <div className="text-[#14532d] group-hover:text-white transition-colors duration-300 mb-3">
                             {cat.icon}
                         </div>
                         
