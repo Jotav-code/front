@@ -1,18 +1,31 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const Chat = () => {
-
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   
-  const chatEndRef = useRef(null);
+  // 1. Mudamos a referência para o CONTAINER das mensagens, não um div vazio no final
+  const messagesContainerRef = useRef(null);
+  
+  // 2. Criamos uma "bandeira" para saber se é o primeiro carregamento
+  const isFirstLoad = useRef(true);
 
   const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Essa lógica rola apenas o container do chat, sem pular a página inteira
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   };
 
   useEffect(() => {
+    // Se for o primeiro carregamento (histórico), a gente marca como falso e NÃO rola
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      return;
+    }
+
+    // Só roda o scroll se NÃO for o primeiro carregamento (ou seja, quando user digita)
     scrollToBottom();
   }, [messages]);
 
@@ -23,36 +36,27 @@ const Chat = () => {
     const mensagensProcessadas = [];
 
     blocos.forEach(bloco => {
-     
       const limpo = bloco.trim();
       if (!limpo) return;
-
-      
       const partes = limpo.split(/\nResposta:/);
-      
       if (partes.length >= 2) {
         const pergunta = partes[0].replace('Pergunta:', '').trim();
         const resposta = partes[1].trim();
-
         if (pergunta) mensagensProcessadas.push({ role: 'user', content: pergunta });
         if (resposta) mensagensProcessadas.push({ role: 'bot', content: resposta });
       }
     });
-
     return mensagensProcessadas;
   };
 
-useEffect(() => {
+  useEffect(() => {
     async function fetchHistorico() {
       try {
         const response = await fetch('http://127.0.0.1:8000/historico');
         const data = await response.json(); 
-        
-        // CORREÇÃO AQUI: Passamos data.historico ao invés de apenas data
-        // O ?. serve para garantir que não quebre se historico vier vazio
         const textoDoHistorico = data.historico || ""; 
-        
         const historicoFormatado = processarHistoricoDoServidor(textoDoHistorico);
+        
         setMessages(historicoFormatado);
         
       } catch (error) {
@@ -69,10 +73,12 @@ useEffect(() => {
 
     const novaPergunta = { role: 'user', content: input };
     
-    
     setMessages(prev => [...prev, novaPergunta]);
     setLoading(true);
     setInput("");
+
+    // Força o scroll imediatamente quando o usuário envia
+    setTimeout(scrollToBottom, 100);
 
     try {
       const response = await fetch('http://127.0.0.1:8000/chat', {
@@ -82,8 +88,6 @@ useEffect(() => {
       });
 
       const data = await response.json();
-      
-      
       setMessages(prev => [...prev, { role: 'bot', content: data.resposta }]);
       
     } catch (error) {
@@ -97,8 +101,14 @@ useEffect(() => {
     <div className="w-full mx-auto flex flex-col items-center h-screen py-10 px-10">
       <h1 className="text-1xl font-bold mb-4 text-green-600">Tem alguma dúvida?</h1>
 
-      
-      <div className="w-full max-w-2xl flex-1 overflow-y-auto border border-gray-300 rounded-xl p-4 bg-gray-50 shadow-inner mb-4">
+      {/* 3. Adicionamos a ref 'messagesContainerRef' aqui no container principal 
+         e garantimos que o 'scroll-behavior' seja smooth via classe CSS se possível,
+         ou controlado pela função JS.
+      */}
+      <div 
+        ref={messagesContainerRef}
+        className="w-full max-w-2xl flex-1 overflow-y-auto border border-gray-300 rounded-xl p-4 bg-gray-50 shadow-inner mb-4 scroll-smooth"
+      >
         {messages.map((msg, index) => (
           <div 
             key={index} 
@@ -122,10 +132,9 @@ useEffect(() => {
             </div>
           </div>
         )}
-        <div ref={chatEndRef} />
+        {/* Removemos o chatEndRef daqui pois estamos controlando pelo container */}
       </div>
 
-      
       <form onSubmit={handleSubmit} className='w-full max-w-2xl flex gap-2'>
         <input 
           placeholder='O que você deseja?' 
@@ -136,7 +145,7 @@ useEffect(() => {
         />
         <button 
           disabled={loading}
-          className='bg-green-800 text-white px-6 py-2 rounded-xl  hover:bg-green-400 transition-all disabled:bg-blue-300'
+          className='bg-green-800 text-white px-6 py-2 rounded-xl hover:bg-green-400 transition-all disabled:bg-blue-300'
           type="submit"
         >
           Enviar
