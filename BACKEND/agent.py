@@ -7,7 +7,10 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 os.environ["LLM_PROVIDER"] = "google"
 os.environ["MODEL_NAME"] = "gemini-2.0-flash" 
-os.environ["GOOGLE_API_KEY"] = "chave"
+
+# não sobrescreve a chave real 
+if "GOOGLE_API_KEY" not in os.environ:
+    os.environ["GOOGLE_API_KEY"] = "chave"
 
 from mangaba import Agent, Task, Crew
 
@@ -71,3 +74,4 @@ def gerar_insights_ia(dados_historico):
     #executa
     equipe = Crew(agents=[analista], tasks=[tarefa], verbose=True)
     return str(equipe.kickoff())
+

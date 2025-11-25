@@ -4,7 +4,8 @@ python-multipart
 pandas
 requests
 openpyxl
-mangaba_ai
+git+https://github.com/Mangaba-ai/mangaba_ai.git
 python-dotenv
 google-generativeai
 tabulate
+

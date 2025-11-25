@@ -185,22 +185,24 @@ async def chat_endpoint(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/historico")
-async def get_historico():
-    """Lê todos os TXTs da pasta logs para mostrar no Front-end."""
+async def get_historico(user_id: str = "anonimo"):
+
     try:
-        dados = ""
-        # Busca apenas dentro da pasta LOGS
-        padrao = os.path.join(PASTA_LOGS, "historico_*.txt")
-        arquivos = glob.glob(padrao)
+        # Caminho exato do arquivo deste usuário
+        caminho_arquivo = os.path.join(PASTA_LOGS, f"historico_{user_id}.txt")
         
-        for f in arquivos:
-            with open(f, "r", encoding="utf-8") as file:
-                dados += file.read()
+        # Verifica se existe antes de tentar ler
+        if not os.path.exists(caminho_arquivo):
+            return {"historico": ""} # Retorna vazio se for novo usuário
+            
+        with open(caminho_arquivo, "r", encoding="utf-8") as file:
+            dados = file.read()
         
-        if not dados: return {"historico": "Vazio"}
         return {"historico": dados}
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Não trava o sistema, só retorna vazio se der erro
+        return {"historico": ""}
 
 @app.get("/insights")
 async def get_insights():
@@ -221,3 +223,4 @@ async def get_insights():
         relatorio = gerar_insights_ia(dados)
         return {"relatorio": relatorio}
     except: return {"erro": "Falha insights"}
+
